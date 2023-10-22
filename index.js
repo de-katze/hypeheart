@@ -13,6 +13,8 @@ if (!seshid) {
 const WebSocket = require("ws");
 const wss = new WebSocket.WebSocketServer({ port: 3000 });
 
+let hr = 0
+
 const clients = new Set();
 
 function connectToHyperateWebSocket() {
@@ -40,6 +42,7 @@ function connectToHyperateWebSocket() {
         const data = JSON.parse(msg.data);
         if (data.event === "hr_update") {
             broadcastMessage(data.payload);
+            hr = data.payload;
         }
     };
 
@@ -52,6 +55,7 @@ connectToHyperateWebSocket();
 
 wss.on('connection', (ws) => {
     clients.add(ws);
+    ws.send(JSON.stringify(hr))
 
     ws.on('close', () => {
         clients.delete(ws);
