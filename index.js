@@ -1,19 +1,18 @@
 const { token, seshid } = process.env;
 
 if (!token) {
-    new Error("token not defined")
-    process.exit() // Safe messures
+    return new Error("token not defined")
 }
 
 if (!seshid) {
-    new Error("seshid not defined")
-    process.exit() // Safe messures
+    return new Error("seshid not defined")
 }
 
 const WebSocket = require("ws");
 const wss = new WebSocket.WebSocketServer({ port: 3000 });
 
 let hr = 0
+const numbers = [];
 
 const clients = new Set();
 
@@ -35,14 +34,15 @@ function connectToHyperateWebSocket() {
                 "payload": {},
                 "ref": 0
             }));
-        }, 10000);
+        }, 8000);
     };
 
     ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
         if (data.event === "hr_update") {
-            broadcastMessage(data.payload);
-            hr = data.payload;
+            hr = data.payload.hr;
+            numbers.push(data.payload.hr)
+            broadcastMessage();
         }
     };
 
@@ -62,7 +62,11 @@ wss.on('connection', (ws) => {
     });
 });
 
-function broadcastMessage(message) {
+function broadcastMessage() {
+    const avg = Math.floor(numbers.reduce((acc, num) => acc + num, 0) / numbers.length)
+
+    const message = { hr, avg }
+    console.log(message)
     for (const client of clients) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(message));
@@ -71,3 +75,16 @@ function broadcastMessage(message) {
         }
     }
 }
+
+
+const clearDaily = () => {
+    const now = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+
+    if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+        numbers = [];
+    }
+};
+
+clearDaily();
+
+setInterval(clearDaily, 60 * 1000);
