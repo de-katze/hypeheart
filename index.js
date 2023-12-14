@@ -78,7 +78,7 @@ function broadcastMessage() {
 
 
 const clearDaily = () => {
-    const now = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
 
     if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() === 0) {
         numbers = [];
